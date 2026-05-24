@@ -17,14 +17,17 @@ def load_catalog(path: Path = CATALOG_PATH) -> dict[str, dict[str, Any]]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def render_field_list(fields: list[tuple[str, str]]) -> None:
+def render_field_list(fields: list[tuple[str, str]], show_cardinality: bool = False) -> None:
     """Render fields as a simple bullet list."""
     if not fields:
         st.write("No fields found")
         return
 
     for field, cardinality in fields:
-        st.write(f"- {field} ({cardinality})")
+        if show_cardinality and cardinality != "unknown":
+            st.write(f"- {field} ({cardinality})")
+        else:
+            st.write(f"- {field}")
 
 
 def fields_with_status(resource_data: dict[str, Any], status: str) -> list[tuple[str, str]]:
@@ -74,7 +77,7 @@ def main() -> None:
 
     with supported_col:
         st.success("✅ Supported")
-        render_field_list(supported)
+        render_field_list(supported, show_cardinality=True)
 
     with unknown_col:
         st.warning("❓ Unknown")
