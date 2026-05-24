@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,11 @@ DEFAULT_MODEL = "gpt-4.1-mini"
 MODEL_ENV_VAR = "OPENAI_EXTRACTION_MODEL"
 DEFAULT_CACHE_DIR = Path("data")
 MAX_INPUT_CHARS = 12_000
+RESOURCE_SAMPLE_PATHS = {
+    "AdverseEvent": Path("data/epic_sample.txt"),
+    "Patient": Path("data/patient_sample.txt"),
+    "Observation": Path("data/observation_sample.txt"),
+}
 
 EXTRACTION_SCHEMA = {
     "type": "object",
@@ -74,7 +80,10 @@ def extract_epic_data(
         "model": selected_model,
         "instructions": (
             "Extract structured data from Epic FHIR documentation. "
-            "Only use fields found in the Response section. "
+            "Only use fields found in the Response section for the target resource. "
+            "Return top-level FHIR field names only, such as name instead of name.family. "
+            "If the response is a Bundle, extract fields from the target resource entries, "
+            "not from the Bundle wrapper. "
             "Return JSON matching the provided schema."
         ),
         "input": (
@@ -123,3 +132,18 @@ def _validate_openai_api_key() -> None:
 def _supports_temperature(model: str) -> bool:
     """Return whether this model family supports a temperature override."""
     return not model.startswith(("o", "gpt-5"))
+
+
+def sample_path_for(resource: str) -> Path:
+    """Return the expected sample text path for a resource."""
+    return RESOURCE_SAMPLE_PATHS.get(resource, Path("data") / f"{resource.lower()}_sample.txt")
+
+
+if __name__ == "__main__":
+    selected_resource = sys.argv[1] if len(sys.argv) > 1 else "AdverseEvent"
+    sample_path = sample_path_for(selected_resource)
+    if not sample_path.exists():
+        raise SystemExit(f"Sample file not found: {sample_path}")
+
+    extracted = extract_epic_data(sample_path.read_text(encoding="utf-8"), resource=selected_resource)
+    print(json.dumps(extracted, indent=2))
