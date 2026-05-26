@@ -1,1 +1,4 @@
 pytest
+playwright
+openai
+streamlit

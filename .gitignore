@@ -1,1 +1,15 @@
+# Mac system file
 .DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables (VERY IMPORTANT)
+.env
+
+# API keys or secrets (if any file exists locally)
+*.key
+
+# Data outputs (DO NOT commit generated files)
+data/
